@@ -21,12 +21,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Validate Secrets
-        run: |
-          echo ${{env.EC2_USER}}
-          echo ${{env.EC2_HOST}}
-          echo ${{env.APP_PORT}}
-          echo ${{env.EC2_SSH_KEY}}
 
       - name: Install dependencies
         run: npm install
@@ -42,6 +36,11 @@ jobs:
       - name: Save Docker image as a tar file
         run: |
           docker save nestjs-backend-project -o nestjs-backend-project.tar
+      - name: Set permissions for .tar file
+        run: chmod 644 nestjs-backend-project.tar
+
+      - name: Verify .tar file
+        run: ls -l nestjs-backend-project.tar
 
       - name: Transfer Docker image to EC2
         uses: appleboy/scp-action@v0.1.7
