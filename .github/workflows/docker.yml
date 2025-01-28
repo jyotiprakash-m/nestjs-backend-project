@@ -49,8 +49,6 @@ jobs:
     steps:
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v0.1.7
-        env:
-          APP_PORT: ${{ env.APP_PORT }}
         with:
           host: ${{ env.EC2_HOST }}
           username: ${{ env.EC2_USER }}
@@ -70,10 +68,10 @@ jobs:
             sudo docker rm nestjs-backend-project || true
 
             # Free up port if needed
-            sudo fuser -k $APP_PORT/tcp || true
+            sudo fuser -k ${{ env.APP_PORT }}/tcp || true
 
             # Run the Docker container
-            sudo docker run -d --name nestjs-backend-project -p $APP_PORT:3000 ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
+            sudo docker run -d --name nestjs-backend-project -p ${{ env.APP_PORT }}:3000 ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
             # Verify the container is running
             sudo docker ps -a | grep nestjs-backend-project
