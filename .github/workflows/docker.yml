@@ -62,8 +62,10 @@ jobs:
           script: |
             apt update && sudo apt install -y docker.io
             sudo systemctl start docker
+
             sudo systemctl enable docker
 
+            sudo chmod 660 /var/run/docker.sock
             sudo docker load -i /home/ubuntu/nestjs-backend-project.tar
             sudo docker stop nestjs-backend-project || true
             sudo docker rm nestjs-backend-project || true
