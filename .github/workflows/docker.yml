@@ -9,13 +9,15 @@ env:
   EC2_HOST: ${{ secrets.EC2_HOST }}
   APP_PORT: ${{ secrets.APP_PORT }}
   EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Deploy
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -28,39 +30,22 @@ jobs:
       - name: Build Application
         run: npm run build
 
+      - name: Log in to Docker Hub
+        run: echo "${{ env.DOCKER_PASSWORD }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin
+
       - name: Build Docker image
         id: build-image
         run: |
-          docker build -t nestjs-backend-project .
+          docker build -t ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest .
 
-      - name: Save Docker image as a tar file
+      - name: Push Docker image to Docker Hub
         run: |
-          docker save nestjs-backend-project -o nestjs-backend-project.tar
+          docker push ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
-      - name: Verify tar file
-        run: |
-          file nestjs-backend-project.tar
-          ls -lh nestjs-backend-project.tar
-
-      - name: Transfer Docker image to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.EC2_USER }}
-          key: ${{ env.EC2_SSH_KEY }}
-          source: nestjs-backend-project.tar
-          target: /home/ubuntu/nestjs-backend-project.tar
-
-      - name: Verify tar file on EC2
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.EC2_USER }}
-          key: ${{ env.EC2_SSH_KEY }}
-          script: |
-            file /home/ubuntu/nestjs-backend-project.tar
-            ls -lh /home/ubuntu/nestjs-backend-project.tar
-
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v0.1.7
         env:
@@ -73,15 +58,11 @@ jobs:
             # Verify Docker is running
             sudo systemctl status docker || sudo systemctl start docker
 
-            # Verify the tar file exists and is valid
-            file /home/ubuntu/nestjs-backend-project.tar
-            ls -lh /home/ubuntu/nestjs-backend-project.tar
+            # Log in to Docker Hub
+            echo "${{ env.DOCKER_PASSWORD }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin
 
-            # Load the Docker image
-            sudo docker load -i /home/ubuntu/nestjs-backend-project.tar
-
-            # Verify the image was loaded
-            sudo docker images
+            # Pull the latest Docker image
+            sudo docker pull ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
             # Stop and remove existing container if it exists
             sudo docker stop nestjs-backend-project || true
@@ -91,7 +72,7 @@ jobs:
             sudo fuser -k $APP_PORT/tcp || true
 
             # Run the Docker container
-            sudo docker run -d --name nestjs-backend-project -p $APP_PORT:3000 nestjs-backend-project
+            sudo docker run -d --name nestjs-backend-project -p $APP_PORT:3000 ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
             # Verify the container is running
             sudo docker ps -a | grep nestjs-backend-project
