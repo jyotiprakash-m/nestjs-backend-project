@@ -21,6 +21,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Validate Secrets
+        run: |
+          echo ${{env.EC2_USER}}
+          echo ${{env.EC2_HOST}}
+          echo ${{env.APP_PORT}}
+          echo ${{env.EC2_SSH_KEY}}
 
       - name: Install dependencies
         run: npm install
