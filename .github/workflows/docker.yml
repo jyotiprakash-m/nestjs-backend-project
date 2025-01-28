@@ -1,0 +1,69 @@
+name: Deploy to Docker on EC2
+
+on:
+  push:
+    branches: ['main']
+
+env:
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  APP_PORT: ${{ secrets.APP_PORT }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Build Docker image
+        id: build-image
+        run: |
+          docker build -t nestjs-backend-project .
+
+      - name: Save Docker image as a tar file
+        run: |
+          docker save nestjs-backend-project -o nestjs-backend-project.tar
+
+      - name: Transfer Docker image to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          source: nestjs-backend-project.tar
+          target: /home/ec2-user/nestjs-backend-project.tar
+
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        env:
+          APP_PORT: ${{ env.APP_PORT }}
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            sudo apt update && sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+
+            docker load -i /home/ec2-user/nestjs-backend-project.tar
+            docker stop nestjs-backend-project || true
+            docker rm nestjs-backend-project || true
+
+            # Free up port if needed
+            sudo fuser -k $APP_PORT/tcp || true
+
+            docker run -d --name nestjs-backend-project -p $APP_PORT:3000 nestjs-backend-project
