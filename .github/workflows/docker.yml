@@ -64,8 +64,8 @@ jobs:
             sudo docker pull ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
             # Stop and remove existing container if it exists
-            sudo docker stop nestjs-backend-project || true
-            sudo docker rm nestjs-backend-project || true
+            sudo docker stop ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest || true
+            sudo docker rm ${{ env.DOCKER_USERNAME }}/nestjs-backend-project:latest || true
 
             # Free up port if needed
             sudo fuser -k ${{ env.APP_PORT }}/tcp || true
