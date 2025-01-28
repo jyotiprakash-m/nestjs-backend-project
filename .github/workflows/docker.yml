@@ -64,11 +64,11 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
 
-            docker load -i /home/ubuntu/nestjs-backend-project.tar
-            docker stop nestjs-backend-project || true
-            docker rm nestjs-backend-project || true
+            sudo docker load -i /home/ubuntu/nestjs-backend-project.tar
+            sudo docker stop nestjs-backend-project || true
+            sudo docker rm nestjs-backend-project || true
 
             # Free up port if needed
             sudo fuser -k $APP_PORT/tcp || true
 
-            docker run -d --name nestjs-backend-project -p $APP_PORT:3000 nestjs-backend-project
+            sudo docker run -d --name nestjs-backend-project -p $APP_PORT:3000 nestjs-backend-project
