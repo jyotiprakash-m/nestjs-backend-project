@@ -64,8 +64,10 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest
 
             # Stop and remove existing container if it exists
-            sudo docker stop nestjs-backend-project || true
-            sudo docker rm nestjs-backend-project || true
+            if [ "$(sudo docker ps -q -f name=nestjs-backend-project)" ]; then
+              sudo docker stop nestjs-backend-project
+              sudo docker rm nestjs-backend-project
+            fi
 
             # Free up port if needed
             sudo fuser -k ${{ secrets.APP_PORT }}/tcp || true
@@ -75,3 +77,6 @@ jobs:
 
             # Verify the container is running
             sudo docker ps -a | grep nestjs-backend-project
+
+            # Log the image ID for reference
+            echo "Deployed image ID: $(sudo docker images -q ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest)"
