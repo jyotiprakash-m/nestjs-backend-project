@@ -14,7 +14,7 @@ export class AppController {
     return 'CI/CD is working';
   }
   //create a get request which will return an object
-  @Get('profile'
+  @Get('profile')
   getProfile(): object {
     return {
       name: 'JP',
