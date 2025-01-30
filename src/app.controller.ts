@@ -13,4 +13,12 @@ export class AppController {
   getHelloBoy(): string {
     return 'CI/CD is working';
   }
+  //create a get request which will return an object
+  @Get('profile'
+  getProfile(): object {
+    return {
+      name: 'JP',
+      title: 'Full Stack Developer',
+    };
+  }
 }
