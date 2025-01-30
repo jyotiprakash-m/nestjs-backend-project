@@ -22,3 +22,4 @@ jobs:
       - name: Build Docker image
         id: build-image
         run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest .
