@@ -2,15 +2,7 @@ name: Deploy to Docker on EC2
 
 on:
   push:
-    branches: ['master']
-
-env:
-  EC2_USER: ${{ secrets.EC2_USER }}
-  EC2_HOST: ${{ secrets.EC2_HOST }}
-  APP_PORT: ${{ secrets.APP_PORT }}
-  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    branches: ['main']
 
 permissions:
   contents: read
@@ -36,11 +28,11 @@ jobs:
       - name: Build Docker image
         id: build-image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest .
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest
 
   deploy:
     name: Deploy
@@ -61,13 +53,13 @@ jobs:
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             # Pull the latest Docker image
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest
 
             # Stop and remove existing container if it exists
-            if [ "$(sudo docker ps -q -f name=nestjs-backend-project)" ]; then
+            if [ "$(sudo docker ps -q -f name=nextjs-backend-project)" ]; then
               echo "Stopping existing container..."
-              sudo docker stop nestjs-backend-project
-              sudo docker rm nestjs-backend-project
+              sudo docker stop nextjs-backend-project
+              sudo docker rm nextjs-backend-project
             fi
 
             # Free up port if needed
@@ -75,14 +67,14 @@ jobs:
 
             # Run the Docker container
             echo "Starting new container..."
-            sudo docker run -d --name nestjs-backend-project -p ${{ secrets.APP_PORT }}:3000 ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest
+            sudo docker run -d --name nextjs-backend-project -p ${{ secrets.APP_PORT }}:3000 ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest
 
             # Verify the container is running
             echo "Verifying the container is running..."
-            sudo docker ps -a | grep nestjs-backend-project
+            sudo docker ps -a | grep nextjs-backend-project
 
             # Log the image ID for reference
-            echo "Deployed image ID: $(sudo docker images -q ${{ secrets.DOCKER_USERNAME }}/nestjs-backend-project:latest)"
+            echo "Deployed image ID: $(sudo docker images -q ${{ secrets.DOCKER_USERNAME }}/nextjs-backend-project:latest)"
 
             # Cleanup dangling images
             echo "Cleaning up dangling images..."
